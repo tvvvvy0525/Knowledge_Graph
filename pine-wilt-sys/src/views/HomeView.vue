@@ -1,14 +1,29 @@
 <template>
   <div class="home-container">
+    <!-- 头部区域 -->
     <div class="header">
-      <h2>松材线虫病知识图谱系统</h2>
-      <el-button type="primary" :loading="store.loading" @click="initGraph">
-        重置图谱
-      </el-button>
+      <div class="brand">
+        <h2>松材线虫病 KG</h2>
+      </div>
+
+      <!-- Member A1: 搜索栏 -->
+      <SearchBar />
+
+      <!-- 右侧操作区 -->
+      <div class="actions">
+        <!-- Member A2: 新建实体 -->
+        <el-button type="primary" plain @click="nodeDialogRef.open()">
+          新建实体
+        </el-button>
+        <!-- Member A3: 新建关系 -->
+        <el-button type="success" plain @click="linkDialogRef.open()">
+          新建关联
+        </el-button>
+        <el-button @click="initGraph">重置图谱</el-button>
+      </div>
     </div>
     
     <div class="content">
-      <!-- 左侧：图谱区域 -->
       <div class="chart-wrapper">
         <GraphChart 
           :nodes="store.nodes" 
@@ -17,22 +32,31 @@
         />
       </div>
       
-      <!-- 右侧：详情面板组件 -->
-      <!-- 将当前选中的节点通过 props 传给子组件 -->
+      <!-- Member B: 详情/编辑面板 -->
       <InfoPanel :current-node="currentNode" />
     </div>
+
+    <!-- 弹窗组件挂载 -->
+    <NodeCreateDialog ref="nodeDialogRef" />
+    <LinkCreateDialog ref="linkDialogRef" />
   </div>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { useGraphStore } from '../stores/graphStore'
-import GraphChart from '../components/GraphChart.vue'
-// 引入新拆分的组件
-import InfoPanel from '../components/InfoPanel.vue'
+import { useGraphStore } from '@/stores/graphStore'
+import GraphChart from '@/components/GraphChart.vue'
+import InfoPanel from '@/components/InfoPanel.vue'
+import SearchBar from '@/components/SearchBar.vue'
+import NodeCreateDialog from '@/components/NodeCreateDialog.vue'
+import LinkCreateDialog from '@/components/LinkCreateDialog.vue'
 
 const store = useGraphStore()
 const currentNode = ref(null)
+
+// 引用弹窗组件实例
+const nodeDialogRef = ref(null)
+const linkDialogRef = ref(null)
 
 const initGraph = () => {
   store.fetchInitGraph()
@@ -41,6 +65,9 @@ const initGraph = () => {
 
 const handleNodeClick = async (nodeData) => {
   currentNode.value = nodeData
+  // 如果 Store 里的 deleteNodeAction 执行了，
+  // 最好在这里加个 watch 监听 store.nodes 变化来自动置空 currentNode，
+  // 或者在 InfoPanel 删除成功后 emit 事件出来。
   await store.toggleNode(nodeData.id)
 }
 
@@ -63,9 +90,20 @@ onMounted(() => {
   display: flex;
   align-items: center;
   padding: 0 20px;
-  justify-content: space-between;
+  justify-content: space-between; /* 左右分布 */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   z-index: 10;
+}
+
+.brand h2 {
+  margin: 0;
+  color: #303133;
+  font-size: 18px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
 }
 
 .content {
