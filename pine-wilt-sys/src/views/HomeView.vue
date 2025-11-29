@@ -8,7 +8,14 @@
 
       <!-- Member A1: 搜索栏 -->
       <SearchBar />
-
+      <el-button
+          type="warning"
+          :icon="FirstAidKit"
+          @click="openDiagnosis"
+          style="margin-left: 10px;"
+      >
+        智能诊断
+      </el-button>
       <!-- 右侧操作区 -->
       <div class="actions">
         <!-- Member A2: 新建实体 -->
@@ -22,16 +29,16 @@
         <el-button @click="initGraph">重置图谱</el-button>
       </div>
     </div>
-    
+
     <div class="content">
       <div class="chart-wrapper">
-        <GraphChart 
-          :nodes="store.nodes" 
-          :links="store.links" 
+        <GraphChart
+          :nodes="store.nodes"
+          :links="store.links"
           @node-click="handleNodeClick"
         />
       </div>
-      
+
       <!-- Member B: 详情/编辑面板 -->
       <InfoPanel :current-node="currentNode" />
     </div>
@@ -39,25 +46,27 @@
     <!-- 弹窗组件挂载 -->
     <NodeCreateDialog ref="nodeDialogRef" />
     <LinkCreateDialog ref="linkDialogRef" />
+    <DiagnosisWizard ref="diagnosisRef" />
   </div>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useGraphStore } from '@/stores/graphStore'
+import { FirstAidKit } from '@element-plus/icons-vue'
 import GraphChart from '@/components/GraphChart.vue'
 import InfoPanel from '@/components/InfoPanel.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import NodeCreateDialog from '@/components/NodeCreateDialog.vue'
 import LinkCreateDialog from '@/components/LinkCreateDialog.vue'
-
+import DiagnosisWizard from '@/components/DiagnosisWizard.vue'
 const store = useGraphStore()
 const currentNode = ref(null)
 
 // 引用弹窗组件实例
 const nodeDialogRef = ref(null)
 const linkDialogRef = ref(null)
-
+const diagnosisRef = ref(null)
 const initGraph = () => {
   store.fetchInitGraph()
   currentNode.value = null
@@ -69,6 +78,12 @@ const handleNodeClick = async (nodeData) => {
   // 最好在这里加个 watch 监听 store.nodes 变化来自动置空 currentNode，
   // 或者在 InfoPanel 删除成功后 emit 事件出来。
   await store.toggleNode(nodeData.id)
+}
+
+const openDiagnosis = () => {
+  if (diagnosisRef.value) {
+    diagnosisRef.value.open()
+  }
 }
 
 onMounted(() => {
