@@ -3,10 +3,10 @@ spring:
     uri: bolt://localhost:7687
     authentication:
       username: neo4j
-      password: 123456  # 请更改为你的Neo4j密码
+      password: 123456 # 请更改为你的Neo4j密码
   data:
     neo4j:
-      database: kgraph
+      database: kgraph # 请更改为你的数据库名称
 
 server:
   port: 8080

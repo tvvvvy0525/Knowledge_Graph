@@ -3,7 +3,7 @@
     <!-- 头部区域 -->
     <div class="header">
       <div class="brand">
-        <h2>松材线虫病 KG</h2>
+        <h2>松材线虫病知识系统</h2>
       </div>
 
       <!-- Member A1: 搜索栏 -->
