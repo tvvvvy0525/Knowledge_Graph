@@ -73,6 +73,56 @@ npm run dev
 
 ---
 
+## 📥 数据库初始化 (Data Import)
+
+本项目使用 Cypher 脚本从 CSV 文件导入初始数据。
+
+**前置要求**：
+1. 请确保 Neo4j 数据库已安装 **APOC 插件** (用于动态创建关系)。
+2. 将 `nodes.csv` 和 `relationship.csv` 文件放入 Neo4j 安装目录的 `import` 文件夹中。
+
+### 1. 导入节点 (Nodes)
+执行以下 Cypher 语句导入实体节点。注意：我们将 CSV 中的 `cn_label` 列映射为了数据库中的 `cn_name` 属性。
+
+```cypher
+// 读取 CSV 文件
+LOAD CSV WITH HEADERS FROM 'file:///nodes.csv' AS row
+
+// 创建节点
+// 统一添加基础标签 :Entity
+CREATE (n:Entity {
+    id: toInteger(row.id),           // 转换 ID 为整数，优化查询性能
+    name: row.name,                  // 英文名
+    cn_name: row.cn_label,           // 中文名 (对应 CSV 表头 cn_label)
+    category: row.category,          // 类别
+    description: row.description     // 描述
+});
+```
+
+### 2. 导入关系 (Relationships)
+执行以下 Cypher 语句建立节点间的关联。此步骤使用了 `apoc.create.relationship` 以支持从 CSV 动态读取关系类型（如 "DAMAGES", "INFECTS" 等）。
+
+```cypher
+LOAD CSV WITH HEADERS FROM 'file:///relationship.csv' AS row
+
+// 匹配源节点和目标节点
+MATCH (source:Entity {id: toInteger(row.source_id)})
+MATCH (target:Entity {id: toInteger(row.target_id)})
+
+// 动态创建关系
+// 参数: 起点, 关系类型(来自CSV), 属性(中文名), 终点
+CALL apoc.create.relationship(source, row.rel_type, {cn_name: row.cn_name}, target) YIELD rel
+
+RETURN count(rel);
+```
+
+### 3. 创建索引 (推荐)
+为了加快 `id` 的查找速度（解决点击节点 404/500 问题），建议为业务 ID 创建索引：
+
+```cypher
+CREATE INDEX FOR (n:Entity) ON (n.id);
+```
+
 ## 📂 项目结构
 
 ### 前端 (`pine-wilt-sys`)
