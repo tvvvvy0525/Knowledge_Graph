@@ -1,16 +1,18 @@
 package com.pinewilt.kg.dto;
 
 import com.pinewilt.kg.model.EntityNode;
+import lombok.Data;
 
-// 定义这个接口，用来接收 "类型 + 中文名 + 目标节点"
-public interface DynamicRelationResult {
+@Data
+public class DynamicRelationResult {
 
-    // 对应 Cypher 里的: RETURN type(r) AS relType
-    String getRelType();
+    // 对应 SQL: RETURN type(r) AS relType
+    private String relType;
 
-    // 对应 Cypher 里的: RETURN r.cn_name AS relCnName
-    String getRelCnName();
+    // 对应 SQL: RETURN r.cn_name AS relCnName
+    private String relCnName;
 
-    // 对应 Cypher 里的: RETURN end AS target
-    EntityNode getTarget();
+    // 对应 SQL: RETURN end AS target
+    // SDN 会自动把节点数据映射到这个 EntityNode 对象中
+    private EntityNode target;
 }

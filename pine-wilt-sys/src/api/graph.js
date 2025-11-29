@@ -21,9 +21,9 @@ export function getInitialGraph() {
  * @param {Number|String} id 节点业务ID
  * @returns {Promise} 返回 { info: {}, relations: {} }
  */
-export function getNodeDetail(id) {
+export function getNeighbors(id) {
   return request({
-    url: `/api/graph/detail/${id}`,
+    url: `/api/graph/neighbors/${id}`,
     method: 'get'
   })
 }
@@ -90,4 +90,12 @@ export function createRelation(data) {
     method: 'post',
     data
   })
+}
+
+export function searchRelationTypes(keyword) {
+    return request({
+        url: '/api/graph/relation/types',
+        method: 'get',
+        params: { q: keyword }
+    })
 }

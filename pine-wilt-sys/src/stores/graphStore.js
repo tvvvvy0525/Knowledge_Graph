@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 // 引入真实的 API
-import { getInitialGraph, getNodeDetail, searchNodes, createNode, updateNode, deleteNode, createRelation } from '@/api/graph'
+import { getInitialGraph, getNeighbors, searchNodes, createNode, updateNode, deleteNode, createRelation } from '@/api/graph'
 import { ElMessage } from 'element-plus'
 export const useGraphStore = defineStore('graph', () => {
   // === State ===
@@ -25,93 +25,179 @@ export const useGraphStore = defineStore('graph', () => {
   // === Actions ===
 
   // 1. 初始化图谱
-  async function fetchInitGraph() {
-    loading.value = true
-    try {
-      // API 返回的是 List<EntityNode>
-      const data = await getInitialGraph()
-      
-      // 直接赋值节点，清空连线
-      nodes.value = data
-      links.value = []
-      expandedNodeIds.value.clear()
-    } catch (error) {
-      console.error('初始化失败:', error)
-    } finally {
-      loading.value = false
+    async function fetchInitGraph() {
+        loading.value = true
+        try {
+            // 1. 先清空当前画布
+            nodes.value = []
+            links.value = []
+            expandedNodeIds.value.clear()
+
+            // 2. 指定初始化的中心节点 ID (根据你的需求是 1)
+            const ROOT_ID = 1
+
+            console.log(`正在初始化图谱，加载核心节点 ID: ${ROOT_ID}...`)
+
+            // 3. 复用 getNeighbors 接口获取数据
+            const res = await getNeighbors(ROOT_ID)
+
+            // --- 数据解析逻辑 (与 expandNode 类似) ---
+
+            // A. 解析中心节点
+            const centerNode = res.node || res.info
+            if (!centerNode) {
+                throw new Error("未找到中心节点信息")
+            }
+            // 添加中心节点
+            nodes.value.push(centerNode)
+
+            // B. 解析邻居和连线
+            const relationsMap = res.neighbors || res.relations || {}
+
+            const newNodes = []
+            const newLinks = []
+            const centerIdStr = toStr(centerNode.id)
+
+            Object.keys(relationsMap).forEach(relType => {
+                const list = relationsMap[relType]
+                list.forEach(item => {
+                    const targetNode = item.target
+                    if (!targetNode) return
+
+                    const targetIdStr = toStr(targetNode.id)
+                    const relLabel = item.relCnName || relType
+
+                    // 收集邻居节点
+                    newNodes.push(targetNode)
+
+                    // 收集连线
+                    newLinks.push({
+                        source: centerIdStr,
+                        target: targetIdStr,
+                        label: relLabel
+                    })
+                })
+            })
+
+            // C. 将新数据去重后加入 State
+            // 因为是初始化，其实不需要去重，直接 push 即可，但为了保险还是判断一下
+            newNodes.forEach(n => {
+                if (!nodeExists(n.id)) nodes.value.push(n)
+            })
+
+            newLinks.forEach(l => {
+                if (!linkExists(l.source, l.target)) links.value.push(l)
+            })
+
+            // D. 标记中心节点为已展开
+            expandedNodeIds.value.add(centerIdStr)
+
+            console.log(`初始化完成: ${nodes.value.length} 节点, ${links.value.length} 连线`)
+
+        } catch (error) {
+            console.error('初始化图谱失败:', error)
+            ElMessage.error('图谱初始化失败，请检查后端服务')
+        } finally {
+            loading.value = false
+        }
     }
-  }
 
   // 2. 核心逻辑：切换节点的展开/收起状态
-  async function toggleNode(nodeId) {
-    const idStr = toStr(nodeId)
+    async function toggleNode(nodeId) {
+        const idStr = toStr(nodeId) // 强转字符串
 
-    if (expandedNodeIds.value.has(idStr)) {
-      // 这里的收起逻辑，我们复用你之前写的"叶子节点移除法"
-      collapseNode(idStr)
-      expandedNodeIds.value.delete(idStr)
-    } else {
-      // 执行展开
-      await expandNode(idStr)
+        if (expandedNodeIds.value.has(idStr)) {
+            console.log('节点已展开，执行收起:', idStr)
+            collapseNode(idStr)
+            expandedNodeIds.value.delete(idStr)
+        } else {
+            console.log('节点未展开，执行展开:', idStr)
+            await expandNode(nodeId)
+        }
     }
-  }
 
   // 2.1 展开逻辑 (适配新的后端结构)
-  async function expandNode(nodeId) {
-    loading.value = true
-    try {
-      // API 返回: { info: {...}, relations: { "DAMAGES": [ {target:..., relCnName:...} ] } }
-      const res = await getNodeDetail(nodeId)
-      
-      const centerId = toStr(res.info.id)
-      const relationsMap = res.relations || {}
+    async function expandNode(nodeId) {
+        loading.value = true
+        try {
+            console.log('正在请求邻居数据, ID:', nodeId)
+            const res = await getNeighbors(nodeId)
+            console.log('API返回数据:', res)
 
-      const newNodes = []
-      const newLinks = []
+            // 1. 解析中心节点
+            // 你的 JSON 里 key 是 "node"
+            const centerNode = res.node || res.info
+            if (!centerNode) {
+                console.warn('返回数据中缺少 node 信息')
+                return
+            }
+            const centerId = toStr(nodeId)
 
-      // 遍历 Map，拍平数据
-      Object.keys(relationsMap).forEach(relType => {
-        const list = relationsMap[relType]
-        
-        list.forEach(item => {
-          const targetNode = item.target
-          const targetId = toStr(targetNode.id)
-          const relLabel = item.relCnName || relType // 优先用中文名
+            // 2. 解析邻居 Map
+            // 你的 JSON 里 key 是 "neighbors"
+            const relationsMap = res.neighbors || res.relations || {}
 
-          // 收集节点 (稍后去重)
-          newNodes.push(targetNode)
+            const newNodes = []
+            const newLinks = []
 
-          // 收集连线
-          newLinks.push({
-            source: centerId,
-            target: targetId,
-            label: relLabel 
-          })
-        })
-      })
+            // 3. 遍历 Map
+            Object.keys(relationsMap).forEach(relType => {
+                const list = relationsMap[relType] // 这是一个数组
 
-      // 合并入 State (去重)
-      newNodes.forEach(n => {
-        if (!nodeExists(n.id)) {
-          nodes.value.push(n)
+                list.forEach(item => {
+                    // item 结构: { relType: "CONTAINS", relCnName: "包含", target: {...} }
+                    const targetNode = item.target
+
+                    if (!targetNode) return
+
+                    const targetId = toStr(targetNode.id)
+                    const relLabel = item.relCnName || relType
+
+                    // 准备添加节点
+                    // 注意：这里暂时不判重，先收集起来，后面统一处理
+                    newNodes.push(targetNode)
+
+                    // 准备添加连线
+                    newLinks.push({
+                        source: centerId,
+                        target: targetId,
+                        label: relLabel
+                    })
+                })
+            })
+
+            console.log(`解析出 ${newNodes.length} 个新节点, ${newLinks.length} 条新连线`)
+
+            // 4. 合并入 State (Vue 响应式更新)
+            // 使用 batch 推送，性能更好
+            let addedNodesCount = 0
+            newNodes.forEach(n => {
+                // 关键：必须确保 ID 类型一致，且 ID 不重复
+                if (!nodeExists(n.id)) {
+                    nodes.value.push(n)
+                    addedNodesCount++
+                }
+            })
+
+            let addedLinksCount = 0
+            newLinks.forEach(l => {
+                if (!linkExists(l.source, l.target)) {
+                    links.value.push(l)
+                    addedLinksCount++
+                }
+            })
+
+            console.log(`实际添加到画布: ${addedNodesCount} 个节点, ${addedLinksCount} 条连线`)
+
+            // 标记为已展开
+            expandedNodeIds.value.add(centerId)
+
+        } catch (error) {
+            console.error('展开失败:', error)
+        } finally {
+            loading.value = false
         }
-      })
-
-      newLinks.forEach(l => {
-        if (!linkExists(l.source, l.target)) {
-          links.value.push(l)
-        }
-      })
-
-      // 标记为已展开
-      expandedNodeIds.value.add(toStr(nodeId))
-
-    } catch (error) {
-      console.error('展开失败:', error)
-    } finally {
-      loading.value = false
     }
-  }
 
   // 2.2 收起逻辑 (保持你原本的优秀逻辑，只加了 ID 类型转换)
   function collapseNode(centerId) {
@@ -154,22 +240,47 @@ export const useGraphStore = defineStore('graph', () => {
   }
 
   // 3. 搜索逻辑
-  async function performSearch(keyword) {
-    if (!keyword) return
-    loading.value = true
-    try {
-      const res = await searchNodes(keyword)
-      // 搜索结果通常是一堆节点，没有连线
-      nodes.value = res
-      links.value = []
-      expandedNodeIds.value.clear()
-      ElMessage.success(`找到 ${res.length} 个相关节点`)
-    } catch (error) {
-      console.error(error)
-    } finally {
-      loading.value = false
+    async function performSearch(keyword) {
+        if (!keyword) return
+        loading.value = true
+        try {
+            // 1. 调用 API
+            // 返回结构: { nodes: [...], links: [...] }
+            const res = await searchNodes(keyword)
+
+            // 2. 【关键修正】正确解构数据
+            // 后端返回的 nodes 和 links 都在 res 对象里，不能直接赋给 nodes.value
+            const searchNodesResult = res.nodes || []
+            const searchLinksResult = res.links || []
+
+            // 3. 赋值给 State
+            // 这里的节点 ID 是数字，GraphChart 会自动转字符串，没问题
+            nodes.value = searchNodesResult
+
+            // 处理连线：确保 source/target 转为字符串 (为了稳健)
+            links.value = searchLinksResult.map(l => ({
+                source: toStr(l.source),
+                target: toStr(l.target),
+                label: l.label
+            }))
+
+            // 4. 重置展开状态
+            expandedNodeIds.value.clear()
+
+            // 5. 【关键修正】获取正确的长度
+            if (searchNodesResult.length > 0) {
+                ElMessage.success(`找到 ${searchNodesResult.length} 个相关节点`)
+            } else {
+                ElMessage.warning('未找到相关节点')
+            }
+
+        } catch (error) {
+            console.error('搜索出错:', error)
+            ElMessage.error('搜索失败')
+        } finally {
+            loading.value = false
+        }
     }
-  }
 
   async function addNode(nodeData) {
     try {

@@ -1,5 +1,6 @@
 package com.pinewilt.kg.controller;
 
+import com.pinewilt.kg.dto.RelationTypeDto;
 import com.pinewilt.kg.model.EntityNode;
 import com.pinewilt.kg.service.GraphService;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,16 @@ public class GraphController {
 
     // 3. GET /api/graph/search?q={kw} - 模糊搜索
     @GetMapping("/search")
-    public ResponseEntity<List<EntityNode>> search(@RequestParam("q") String keyword) {
-        return ResponseEntity.ok(graphService.search(keyword));
+    public ResponseEntity<Map<String, Object>> search(@RequestParam String q) {
+        if (q == null || q.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        // Service 现在返回的是 Map { nodes: [], links: [] }
+        return ResponseEntity.ok(graphService.search(q));
+    }
+
+    @GetMapping("/relation/types")
+    public ResponseEntity<List<RelationTypeDto>> searchRelationTypes(@RequestParam String q) {
+        return ResponseEntity.ok(graphService.searchRelationTypes(q));
     }
 }

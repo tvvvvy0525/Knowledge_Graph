@@ -1,8 +1,6 @@
 package com.pinewilt.kg.service.impl;
 
-import com.pinewilt.kg.dto.DynamicRelationResult;
-import com.pinewilt.kg.dto.NodeRequest;
-import com.pinewilt.kg.dto.RelationRequest;
+import com.pinewilt.kg.dto.*;
 import com.pinewilt.kg.model.EntityNode;
 import com.pinewilt.kg.repository.EntityNodeRepository;
 import com.pinewilt.kg.service.GraphService;
@@ -11,10 +9,7 @@ import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,8 +27,40 @@ public class GraphServiceImpl implements GraphService {
     }
 
     @Override
-    public List<EntityNode> search(String keyword) {
-        return entityNodeRepository.search(keyword);
+    public Map<String, Object> search(String keyword) {
+        Map<String, Object> result = new HashMap<>();
+
+        // 1. 第一步：先找出所有符合关键词的节点
+        List<EntityNode> nodes = entityNodeRepository.searchNodes(keyword);
+
+        // 如果没搜到东西，直接返回空
+        if (nodes.isEmpty()) {
+            result.put("nodes", new ArrayList<>());
+            result.put("links", new ArrayList<>());
+            return result;
+        }
+
+        // 2. 提取所有节点的 ID
+        List<Long> nodeIds = nodes.stream()
+                .map(EntityNode::getId)
+                .collect(Collectors.toList());
+
+        // 3. 第二步：查询这些节点之间是否存在关系
+        List<InternalRelationDto> relationDtos = entityNodeRepository.findRelationsBetweenNodes(nodeIds);
+
+        // 4. 组装前端需要的 links 格式
+        List<Map<String, Object>> links = new ArrayList<>();
+        for (InternalRelationDto rel : relationDtos) {
+            Map<String, Object> link = new HashMap<>();
+            link.put("source", rel.getSourceId());
+            link.put("target", rel.getTargetId());
+            link.put("label", rel.getRelCnName() != null ? rel.getRelCnName() : rel.getRelType());
+            links.add(link);
+        }
+
+        result.put("nodes", nodes);
+        result.put("links", links);
+        return result;
     }
 
     @Override
@@ -41,12 +68,8 @@ public class GraphServiceImpl implements GraphService {
         Map<String, Object> result = new HashMap<>();
 
         // 1. 获取中心节点信息
-        EntityNode centerNode = entityNodeRepository.findById(id) // 注意：这里假设 id 是 graphId 还是 业务id？
-                // 如果你的 Repository findById 用的是 graphId，而前端传的是 businessId，
-                // 你需要确认 repository 里是否有 findById(businessId) 方法。
-                // 假设 Repository 里有一个 findByBusinessId(Long id) 或者我们统一约定前端传的是业务ID
-                // 下面用自定义查询确保按业务ID查:
-                .orElseThrow(() -> new RuntimeException("节点不存在"));
+        EntityNode centerNode = entityNodeRepository.findOneByBusinessId(id)
+                .orElseThrow(() -> new RuntimeException("节点不存在，ID: " + id));
 
         // 如果 findById 是按 Neo4j 内部 ID 查的，而你想按业务 ID 查，请用 repository.findByCustomId(id)
         // 这里为了演示方便，假设你已经处理好了 ID 映射，或者前端传的就是 GraphId。
@@ -68,19 +91,34 @@ public class GraphServiceImpl implements GraphService {
     // ================= 写操作 =================
 
     @Override
-    @Transactional
+    @Transactional("transactionManager")
     public EntityNode createNode(NodeRequest request) {
         EntityNode node = new EntityNode();
-        node.setId(request.getId()); // 业务ID
+
+        // 1. 设置基本属性
+        node.setId(request.getId()); // 如果前端没传，这里是 null
         node.setName(request.getName());
         node.setCnName(request.getCnName());
         node.setCategory(request.getCategory());
         node.setDescription(request.getDescription());
-        return entityNodeRepository.save(node);
+
+        // 2. 第一次保存，获取系统生成的 graphId
+        EntityNode savedNode = entityNodeRepository.save(node);
+
+        // 3. 自动回填 ID 逻辑
+        if (savedNode.getId() == null) {
+            // 【修改点】按照你的要求，赋值为 graphId + 1
+            savedNode.setId(savedNode.getGraphId() + 1);
+
+            // 再次保存以更新 id 属性
+            return entityNodeRepository.save(savedNode);
+        }
+
+        return savedNode;
     }
 
     @Override
-    @Transactional
+    @Transactional("transactionManager")
     public EntityNode updateNode(NodeRequest request) {
         // 1. 先查出来 (根据业务ID)
         // 假设 Repository 中有 EntityNode findById(Long id) 返回业务ID匹配的节点
@@ -99,7 +137,7 @@ public class GraphServiceImpl implements GraphService {
     }
 
     @Override
-    @Transactional
+    @Transactional("transactionManager")
     public void deleteNode(Long id) {
         // 级联删除通常在数据库层面做比较好 (DETACH DELETE)
         // SDN 的 delete 方法默认就是 DETACH DELETE (删除节点及关联边)
@@ -110,7 +148,7 @@ public class GraphServiceImpl implements GraphService {
     }
 
     @Override
-    @Transactional
+    @Transactional("transactionManager")
     public void createRelation(RelationRequest request) {
         // 动态关系创建！因为 relType 是变量，不能用 @Query 参数化
         // 必须拼接 Cypher 字符串 (注意：实际生产中要校验 relType 防止注入，这里假设内部使用)
@@ -127,5 +165,10 @@ public class GraphServiceImpl implements GraphService {
                 .bind(request.getTargetId()).to("targetId")
                 .bind(request.getCnName()).to("cnName")
                 .run();
+    }
+
+    @Override
+    public List<RelationTypeDto> searchRelationTypes(String keyword) {
+        return entityNodeRepository.searchRelationTypes(keyword);
     }
 }
