@@ -47,6 +47,7 @@
     <NodeCreateDialog ref="nodeDialogRef" />
     <LinkCreateDialog ref="linkDialogRef" />
     <DiagnosisWizard ref="diagnosisRef" />
+    <AIChatBox />
   </div>
 </template>
 
@@ -60,6 +61,7 @@ import SearchBar from '@/components/SearchBar.vue'
 import NodeCreateDialog from '@/components/NodeCreateDialog.vue'
 import LinkCreateDialog from '@/components/LinkCreateDialog.vue'
 import DiagnosisWizard from '@/components/DiagnosisWizard.vue'
+import AIChatBox from '@/components/AIChatBox.vue'
 const store = useGraphStore()
 const currentNode = ref(null)
 

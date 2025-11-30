@@ -19,20 +19,48 @@
     
     <properties>
         <java.version>21</java.version>
+        <!-- 定义 Spring AI 的版本，建议使用里程碑版本以获得新特性 -->
+        <spring-ai.version>1.0.0-M1</spring-ai.version>
     </properties>
     
     <dependencies>
-        <!-- Spring Boot Starters -->
+        <!-- 1. Web Starter (包含 Jackson, Tomcat 等) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+
+        <!-- 2. Neo4j Starter (基础图数据库操作) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-neo4j</artifactId>
         </dependency>
+
+        <!-- ========================================================== -->
+        <!-- 3. Spring AI 核心组件 (新增) -->
+        <!-- ========================================================== -->
         
-        <!-- Lombok -->
+        <!-- Ollama 支持 (用于连接本地大模型 qwen2.5) -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-ollama-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Neo4j Vector Store (用于 RAG 向量检索，支持存 JSON 向量) -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-neo4j-store-spring-boot-starter</artifactId>
+        </dependency>
+        
+        <!-- (可选) 文档读取工具，方便读取 PDF/TXT 等，虽然你目前用 JSON，加上这个以后扩展方便 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-tika-document-reader</artifactId>
+        </dependency>
+
+        <!-- ========================================================== -->
+        
+        <!-- Lombok (简化代码) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -46,6 +74,19 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <!-- 4. 依赖版本管理 (BOM) -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <plugins>
@@ -63,4 +104,25 @@
             </plugin>
         </plugins>
     </build>
+
+    <!-- 5. 必须配置的仓库 (因为 Spring AI 还在快速迭代，不在 Maven 中央仓库) -->
+    <repositories>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>spring-snapshots</id>
+            <name>Spring Snapshots</name>
+            <url>https://repo.spring.io/snapshot</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
+    </repositories>
+
 </project>

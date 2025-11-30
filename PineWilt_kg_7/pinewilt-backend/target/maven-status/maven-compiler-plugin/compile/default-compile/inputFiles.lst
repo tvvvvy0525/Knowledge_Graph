@@ -1,0 +1,16 @@
+/Users/tiffany/code/KE/KE_System/PineWilt_kg_7/pinewilt-backend/src/main/java/com/pinewilt/kg/service/DiagnosisService.java
+/Users/tiffany/code/KE/KE_System/PineWilt_kg_7/pinewilt-backend/src/main/java/com/pinewilt/kg/dto/RelationRequest.java
+/Users/tiffany/code/KE/KE_System/PineWilt_kg_7/pinewilt-backend/src/main/java/com/pinewilt/kg/dto/InternalRelationDto.java
+/Users/tiffany/code/KE/KE_System/PineWilt_kg_7/pinewilt-backend/src/main/java/com/pinewilt/kg/dto/NodeRequest.java
+/Users/tiffany/code/KE/KE_System/PineWilt_kg_7/pinewilt-backend/src/main/java/com/pinewilt/kg/PinewiltKgApplication.java
+/Users/tiffany/code/KE/KE_System/PineWilt_kg_7/pinewilt-backend/src/main/java/com/pinewilt/kg/dto/DynamicRelationResult.java
+/Users/tiffany/code/KE/KE_System/PineWilt_kg_7/pinewilt-backend/src/main/java/com/pinewilt/kg/controller/ManageController.java
+/Users/tiffany/code/KE/KE_System/PineWilt_kg_7/pinewilt-backend/src/main/java/com/pinewilt/kg/model/EntityNode.java
+/Users/tiffany/code/KE/KE_System/PineWilt_kg_7/pinewilt-backend/src/main/java/com/pinewilt/kg/dto/DiagnosisResult.java
+/Users/tiffany/code/KE/KE_System/PineWilt_kg_7/pinewilt-backend/src/main/java/com/pinewilt/kg/repository/EntityNodeRepository.java
+/Users/tiffany/code/KE/KE_System/PineWilt_kg_7/pinewilt-backend/src/main/java/com/pinewilt/kg/controller/DiagnosisController.java
+/Users/tiffany/code/KE/KE_System/PineWilt_kg_7/pinewilt-backend/src/main/java/com/pinewilt/kg/service/impl/GraphServiceImpl.java
+/Users/tiffany/code/KE/KE_System/PineWilt_kg_7/pinewilt-backend/src/main/java/com/pinewilt/kg/service/GraphService.java
+/Users/tiffany/code/KE/KE_System/PineWilt_kg_7/pinewilt-backend/src/main/java/com/pinewilt/kg/dto/RelationTypeDto.java
+/Users/tiffany/code/KE/KE_System/PineWilt_kg_7/pinewilt-backend/src/main/java/com/pinewilt/kg/controller/GraphController.java
+/Users/tiffany/code/KE/KE_System/PineWilt_kg_7/pinewilt-backend/src/main/java/com/pinewilt/kg/dto/DiagnosisRequest.java
