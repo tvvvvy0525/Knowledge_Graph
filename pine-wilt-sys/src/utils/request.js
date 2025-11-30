@@ -6,7 +6,7 @@ const service = axios.create({
   // 修改点 1: 去掉 /api，防止与 api/graph.js 里的路径重复拼接成 /api/api/...
   // 如果你在 vite.config.js 里配置了 proxy 转发 /api，这里留空即可，浏览器会自动请求当前域名
   baseURL: '', 
-  timeout: 5000
+  timeout: 60000
 })
 
 // 响应拦截器

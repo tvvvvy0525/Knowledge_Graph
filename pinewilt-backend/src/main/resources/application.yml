@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: pinewilt-kg
+  neo4j:
+    uri: bolt://localhost:7687
+    authentication:
+      username: neo4j
+      password: 12345678 # 请更改为你的Neo4j密码
+  data:
+    neo4j:
+      database: kgraph # 请更改为你的数据库名称
+
+  ai:
+    ollama:
+      base-url: http://localhost:11434 # Ollama 本地服务默认地址
+      
+      # [A] 聊天模型配置 (用于生成回答)
+      chat:
+        enabled: true
+        options:
+          model: pwn-expert # 【请修改】确保你 `ollama pull` 的模型名一致 (如 qwen2.5:7b 或 pwn-expert)
+          temperature: 0.7  # 创造性 (0.0-1.0)，0.7 比较平衡，越低越严谨
+      
+      # [B] 嵌入模型配置 (用于将文本转为向量)
+      # 建议专门拉取一个嵌入模型，如 `ollama pull nomic-embed-text`，效果比用 LLM 做嵌入更好且更快
+      embedding:
+        enabled: true
+        options:
+          model: nomic-embed-text # 如果不想下新模型，可以暂用 qwen2.5，但建议换成专门的 embedding 模型
+
+    # [C] 向量数据库配置 (Neo4j)
+    vectorstore:
+      neo4j:
+        # 向量索引名称，Spring AI 会自动在 Neo4j 中创建这个索引
+        index-name: custom-vector-index 
+        
+        # 【关键配置】向量维度 (Embedding Dimension)
+        # 这个数字必须与上面的 embedding.options.model 对应！
+        # - 如果用 qwen2.5:7b，维度通常是 3584 (或 4096，取决于具体量化版本，建议查文档)
+        # - 如果用 nomic-embed-text，维度是 768 (推荐)
+        # - 如果用 all-minilm，维度是 384
+        embedding-dimension: 768 
+        
+        # 存入 Neo4j 时节点的标签名，默认是 Document
+        label: Document 
+        
+        # 初始化架构，设为 true 会在启动时尝试创建索引
+        initialize-schema: true
+
+server:
+  port: 8080

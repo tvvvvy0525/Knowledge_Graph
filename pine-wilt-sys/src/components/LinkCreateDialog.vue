@@ -74,7 +74,7 @@
       <el-form-item label="关系中文名">
         <el-input
             v-model="form.cnName"
-            placeholder="例如: 危害 (选已有类型会自动填充)"
+            placeholder="例如: 危害"
         />
       </el-form-item>
 

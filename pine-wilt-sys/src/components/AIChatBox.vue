@@ -17,7 +17,7 @@
             <div class="chat-header">
               <div class="header-left">
                 <el-avatar :size="30" :icon="Service" class="ai-avatar" />
-                <span class="title">松材线虫病专家 AI</span>
+                <span class="title">松材线虫病专家AI</span>
               </div>
               <el-button link @click="closeChat">
                 <el-icon size="20"><Close /></el-icon>
@@ -147,145 +147,163 @@
     })
   }
   </script>
-  
-  <style scoped>
-  /* 容器定位：固定在右下角 */
-  .ai-chat-container {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    z-index: 2000; /* 保证在最上层 */
-  }
-  
-  /* 悬浮按钮样式 */
-  .float-btn {
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, #409EFF, #337ecc);
-    border-radius: 50%;
-    box-shadow: 0 4px 15px rgba(64, 158, 255, 0.4);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: transform 0.3s;
-  }
-  .float-btn:hover {
-    transform: scale(1.1);
-  }
-  .btn-text {
-    font-size: 10px;
-    color: #fff;
-    margin-top: 2px;
-  }
-  
-  /* 聊天窗口样式 */
-  .chat-window {
-    width: 380px;
-    height: 550px;
-    display: flex;
-    flex-direction: column;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    overflow: hidden;
-  }
-  
-  .chat-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #f5f7fa;
-    padding: 10px 15px;
-    border-bottom: 1px solid #e4e7ed;
-  }
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .title {
-    font-weight: bold;
-    color: #303133;
-    font-size: 15px;
-  }
-  .ai-avatar {
-    background-color: #409EFF;
-  }
-  
-  /* 消息主体区域 */
-  .chat-body {
-    height: 430px; /* 固定高度 */
-    overflow-y: auto;
-    padding: 15px;
-    background-color: #fff;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-  
-  /* 消息行 */
-  .message {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    max-width: 100%;
-  }
-  .message.user {
-    flex-direction: row-reverse; /* 用户消息靠右 */
-  }
-  .message.ai {
-    flex-direction: row; /* AI 消息靠左 */
-  }
-  
-  /* 气泡样式 */
-  .bubble {
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 14px;
-    line-height: 1.5;
-    max-width: 75%;
-    word-break: break-all;
-    white-space: pre-wrap; /* 保留换行符 */
-  }
-  
-  /* 颜色区分 */
-  .message.ai .bubble {
-    background-color: #f4f4f5;
-    color: #303133;
-    border-top-left-radius: 0;
-  }
-  .message.user .bubble {
-    background-color: #ecf5ff; /* 浅蓝 */
-    color: #409EFF;
-    border: 1px solid #d9ecff;
-    border-top-right-radius: 0;
-  }
-  
-  .msg-avatar {
-    flex-shrink: 0;
-  }
-  
-  /* 底部输入区 */
-  .chat-footer {
-    padding: 10px 15px;
-    border-top: 1px solid #e4e7ed;
-    background-color: #fff;
-  }
-  
-  /* 加载动画的小点 */
-  .loading-bubble {
-    display: flex;
-    gap: 3px;
-  }
-  .dot {
-    animation: jump 1.5s infinite;
-  }
-  .dot:nth-child(2) { animation-delay: 0.2s; }
-  .dot:nth-child(3) { animation-delay: 0.4s; }
-  
-  @keyframes jump {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
-  }
-  </style>
+
+<style scoped>
+/* 容器定位：固定在右下角 */
+.ai-chat-container {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 2000;
+}
+
+/* 悬浮按钮样式 */
+.float-btn {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #409EFF, #337ecc);
+  border-radius: 50%;
+  box-shadow: 0 4px 15px rgba(64, 158, 255, 0.4);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+.float-btn:hover {
+  transform: scale(1.1);
+}
+.btn-text {
+  font-size: 10px;
+  color: #fff;
+  margin-top: 2px;
+}
+
+/* === 核心修复区域 START === */
+
+/* 1. 聊天窗口外层 */
+.chat-window {
+  width: 380px;
+  height: 550px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 2. 关键修复：让 el-card 的内部 body 变成 Flex 列布局并撑满高度 */
+.chat-window :deep(.el-card__body) {
+  flex: 1;                 /* 占据 Header 之外的所有空间 */
+  display: flex;           /* 开启 Flex 布局 */
+  flex-direction: column;  /* 垂直排列内容 */
+  overflow: hidden;        /* 防止双重滚动条 */
+  padding: 0;              /* 确保无内边距（配合 :body-style） */
+}
+
+/* 3. 去掉 Header 的默认边框和内边距，完全自定义 */
+.chat-window :deep(.el-card__header) {
+  padding: 0;
+  border-bottom: none;
+}
+
+/* 4. 消息区域：自动撑开，占据剩余空间 */
+.chat-body {
+  flex: 1;                 /* 关键：这会让它把 Footer 挤到最下面 */
+  overflow-y: auto;        /* 内容多了才滚动 */
+  padding: 15px;
+  background-color: #f5f7fa;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* 5. 底部输入区：固定高度，不被压缩 */
+.chat-footer {
+  flex-shrink: 0;
+  padding: 10px 15px;
+  border-top: 1px solid #e4e7ed;
+  background-color: #fff;
+}
+
+/* === 核心修复区域 END === */
+
+/* 以下样式保持不变 */
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  padding: 15px;
+  border-bottom: 1px solid #e4e7ed;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.title {
+  font-weight: bold;
+  color: #303133;
+  font-size: 15px;
+}
+
+/* 消息气泡样式 */
+.message {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.message.user {
+  flex-direction: row-reverse;
+}
+.message.ai {
+  flex-direction: row;
+}
+
+.bubble {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 80%;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+.message.ai .bubble {
+  background-color: #fff;
+  border: 1px solid #e4e7ed;
+  color: #303133;
+  border-top-left-radius: 0;
+}
+.message.user .bubble {
+  background-color: #ecf5ff;
+  color: #409EFF;
+  border: 1px solid #d9ecff;
+  border-top-right-radius: 0;
+}
+
+.msg-avatar {
+  flex-shrink: 0;
+}
+
+/* 加载动画 */
+.loading-bubble {
+  display: flex;
+  gap: 3px;
+}
+.dot {
+  animation: jump 1.5s infinite;
+}
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes jump {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+</style>

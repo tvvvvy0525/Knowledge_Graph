@@ -142,25 +142,31 @@ export const useGraphStore = defineStore('graph', () => {
 
             // 3. 遍历 Map
             Object.keys(relationsMap).forEach(relType => {
-                const list = relationsMap[relType] // 这是一个数组
+                const list = relationsMap[relType]
 
                 list.forEach(item => {
-                    // item 结构: { relType: "CONTAINS", relCnName: "包含", target: {...} }
+                    // item 结构期望: { relType: "...", relCnName: "...", target: {...}, sourceId: 123 }
                     const targetNode = item.target
-
                     if (!targetNode) return
 
-                    const targetId = toStr(targetNode.id)
+                    const neighborId = toStr(targetNode.id)
                     const relLabel = item.relCnName || relType
 
+                    // 【新增逻辑】获取真实关系的起始ID (由后端返回)
+                    // 如果后端没返回 sourceId，默认为 centerId (向外指)
+                    const realSourceId = item.sourceId ? toStr(item.sourceId) : centerId
+
                     // 准备添加节点
-                    // 注意：这里暂时不判重，先收集起来，后面统一处理
                     newNodes.push(targetNode)
 
                     // 准备添加连线
+                    // 逻辑判断：如果真实起点的ID 等于 邻居节点的ID，说明是【入边】(邻居 -> 我)
+                    // 否则就是【出边】(我 -> 邻居)
+                    const isIncoming = (realSourceId === neighborId)
+
                     newLinks.push({
-                        source: centerId,
-                        target: targetId,
+                        source: isIncoming ? neighborId : centerId, // 起点
+                        target: isIncoming ? centerId : neighborId, // 终点
                         label: relLabel
                     })
                 })
