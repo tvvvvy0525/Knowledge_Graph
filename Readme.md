@@ -139,6 +139,3 @@ ollama run qwen2.5:7b
 
 [MIT](https://opensource.org/licenses/MIT)
 
----
-
-Copyright © 2024 Pine Wilt Disease Knowledge Engineering Group.
