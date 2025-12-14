@@ -1,9 +1,3 @@
-这是一个为你定制的、专业且内容详实的 `README.md` 文件。它涵盖了项目介绍、核心功能、技术架构、环境要求、部署步骤以及 RAG 的原理说明。
-
-你可以直接将以下内容复制到你项目的根目录下（覆盖原有的 README）。
-
----
-
 # 🌲 松材线虫病知识图谱智能系统 (Pine Wilt Disease Knowledge System)
 
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.4-green) ![Vue](https://img.shields.io/badge/Vue-3.3-42b883) ![Neo4j](https://img.shields.io/badge/Neo4j-5.15+-blue) ![Ollama](https://img.shields.io/badge/AI-Ollama-orange)
